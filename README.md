@@ -1,7 +1,5 @@
 # Unfilled Stats Highlighter
 
-https://img.shields.io/badge/version-1.0.0-green
-
 The Unfilled Stats Highlighter is a practical [Obsidian](https://obsidian.md) plugin designed to streamline your stat/habit tracking process by automatically identifying and prefixing unfilled stats, making them easier to spot and fill out. This plugin is perfect for users who frequently work with templates and require a quick and easy way to locate and complete missing information.
 
 This project uses Typescript to provide type checking and documentation.
@@ -11,7 +9,7 @@ The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definiti
 
 # License
 
-https://img.shields.io/badge/license-MIT-blue
+MIT
 
 # Features
 
