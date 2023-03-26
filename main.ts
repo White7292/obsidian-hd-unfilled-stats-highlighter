@@ -3,13 +3,17 @@ import { App, MarkdownView, Plugin, PluginSettingTab, Setting } from "obsidian";
 // Remember to rename these classes and interfaces!
 
 interface EmptyStatsHighlighterSettings {
+	statRegex: string;
 	unfilledStatPrefix: string;
 	templatesDirectory: string;
+	targetHighlightingDirectory: string;
 }
 
 const DEFAULT_SETTINGS: EmptyStatsHighlighterSettings = {
-	unfilledStatPrefix: "==",
+	statRegex: "^.*\\: $",
+	unfilledStatPrefix: "__",
 	templatesDirectory: "Templates",
+	targetHighlightingDirectory: "Journaling",
 };
 
 export default class EmptyStatsHighlighter extends Plugin {
@@ -21,19 +25,23 @@ export default class EmptyStatsHighlighter extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
+		// This adds a settings tab so the user can configure various aspects of
+		// the plugin.
 		this.addSettingTab(new SettingsTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			// console.log("click", evt);
-
+		// If the plugin hooks up any global DOM events (on parts of the app that
+		// doesn't belong to this plugin)
+		// Using this function will automatically remove the event listener when
+		// this plugin is disabled.
+		this.registerDomEvent(document, "keyup", (evt: KeyboardEvent) => {
 			const activeFile = this.app.workspace.getActiveFile();
 
 			if (
 				!activeFile?.path.contains(
 					`${this.settings.templatesDirectory}/`
+				) &&
+				activeFile?.path.contains(
+					`${this.settings.targetHighlightingDirectory}/`
 				)
 			) {
 				const view =
@@ -50,19 +58,17 @@ export default class EmptyStatsHighlighter extends Plugin {
 								!line.startsWith(
 									this.settings.unfilledStatPrefix
 								) &&
-								line.match("^.*\\: $")
+								line.match(this.settings.statRegex)
 							) {
 								editor.setLine(
 									i,
 									`${this.settings.unfilledStatPrefix}${line}`
 								);
-							}
-
-							if (
+							} else if (
 								line.startsWith(
 									this.settings.unfilledStatPrefix
 								) &&
-								!line.match("^.*\\: $")
+								!line.match(this.settings.statRegex)
 							) {
 								editor.setLine(
 									i,
@@ -76,11 +82,6 @@ export default class EmptyStatsHighlighter extends Plugin {
 				}
 			}
 		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
 	}
 
 	// Runs when the plugin is disabled.
@@ -119,6 +120,21 @@ class SettingsTab extends PluginSettingTab {
 		});
 
 		new Setting(containerEl)
+			.setName("Stat Regex")
+			.setDesc(
+				"Lines that match this javascript regex are considered stats."
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("Regex")
+					.setValue(this.plugin.settings.statRegex)
+					.onChange(async (value) => {
+						this.plugin.settings.statRegex = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
 			.setName("Unfilled Stat Prefix")
 			.setDesc("Prefixes stats that haven't been filled out yet.")
 			.addText((text) =>
@@ -126,13 +142,8 @@ class SettingsTab extends PluginSettingTab {
 					.setPlaceholder("Prefix")
 					.setValue(this.plugin.settings.unfilledStatPrefix)
 					.onChange(async (value) => {
-						// const oldPrefix =
-						// 	this.plugin.settings.unfilledStatPrefix;
-
 						this.plugin.settings.unfilledStatPrefix = value;
 						await this.plugin.saveSettings();
-
-						// TODO: Remove old prefixes.
 					})
 			);
 
@@ -147,6 +158,20 @@ class SettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.templatesDirectory)
 					.onChange(async (value) => {
 						this.plugin.settings.templatesDirectory = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Target Highlighting Directory Name")
+			.setDesc("The folder that contains your stats to highlight.")
+			.addText((text) =>
+				text
+					.setPlaceholder("Stats Directory")
+					.setValue(this.plugin.settings.targetHighlightingDirectory)
+					.onChange(async (value) => {
+						this.plugin.settings.targetHighlightingDirectory =
+							value;
 						await this.plugin.saveSettings();
 					})
 			);
