@@ -1,23 +1,28 @@
-import { App, MarkdownView, Plugin, PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	MarkdownView,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	normalizePath,
+} from "obsidian";
 
-// Remember to rename these classes and interfaces!
-
-interface EmptyStatsHighlighterSettings {
+interface UnfilledStatsHighlighterSettings {
 	statRegex: string;
 	unfilledStatPrefix: string;
 	templatesDirectory: string;
 	targetHighlightingDirectory: string;
 }
 
-const DEFAULT_SETTINGS: EmptyStatsHighlighterSettings = {
+const DEFAULT_SETTINGS: UnfilledStatsHighlighterSettings = {
 	statRegex: "^.*\\: $",
 	unfilledStatPrefix: "__",
 	templatesDirectory: "Templates",
 	targetHighlightingDirectory: "Journaling",
 };
 
-export default class EmptyStatsHighlighter extends Plugin {
-	settings: EmptyStatsHighlighterSettings;
+export default class UnfilledStatsHighlighter extends Plugin {
+	settings: UnfilledStatsHighlighterSettings;
 
 	// Runs whenever the user starts using the plugin in Obsidian.
 	// This is where you'll configure most of the plugin's capabilities.
@@ -27,7 +32,9 @@ export default class EmptyStatsHighlighter extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of
 		// the plugin.
-		this.addSettingTab(new SettingsTab(this.app, this));
+		this.addSettingTab(
+			new UnfilledStatsHighlighterSettingsTab(this.app, this)
+		);
 
 		// If the plugin hooks up any global DOM events (on parts of the app that
 		// doesn't belong to this plugin)
@@ -102,10 +109,10 @@ export default class EmptyStatsHighlighter extends Plugin {
 	}
 }
 
-class SettingsTab extends PluginSettingTab {
-	plugin: EmptyStatsHighlighter;
+class UnfilledStatsHighlighterSettingsTab extends PluginSettingTab {
+	plugin: UnfilledStatsHighlighter;
 
-	constructor(app: App, plugin: EmptyStatsHighlighter) {
+	constructor(app: App, plugin: UnfilledStatsHighlighter) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -116,7 +123,7 @@ class SettingsTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl("h2", {
-			text: "Empty Stats Highlighter Settings",
+			text: "Unfilled Stats Highlighter Settings",
 		});
 
 		new Setting(containerEl)
@@ -157,7 +164,8 @@ class SettingsTab extends PluginSettingTab {
 					.setPlaceholder("Directory")
 					.setValue(this.plugin.settings.templatesDirectory)
 					.onChange(async (value) => {
-						this.plugin.settings.templatesDirectory = value;
+						this.plugin.settings.templatesDirectory =
+							normalizePath(value);
 						await this.plugin.saveSettings();
 					})
 			);
@@ -171,7 +179,7 @@ class SettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.targetHighlightingDirectory)
 					.onChange(async (value) => {
 						this.plugin.settings.targetHighlightingDirectory =
-							value;
+							normalizePath(value);
 						await this.plugin.saveSettings();
 					})
 			);
