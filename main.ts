@@ -40,55 +40,58 @@ export default class UnfilledStatsHighlighter extends Plugin {
 		// doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when
 		// this plugin is disabled.
-		this.registerDomEvent(document, "keyup", (evt: KeyboardEvent) => {
-			const activeFile = this.app.workspace.getActiveFile();
+		this.registerEvent(
+			this.app.workspace.on("editor-change", () => {
+				const activeFile = this.app.workspace.getActiveFile();
 
-			if (
-				!activeFile?.path.contains(
-					`${this.settings.templatesDirectory}/`
-				) &&
-				activeFile?.path.contains(
-					`${this.settings.targetHighlightingDirectory}/`
-				)
-			) {
-				const view =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (
+					!activeFile?.path.contains(
+						`${this.settings.templatesDirectory}/`
+					) &&
+					activeFile?.path.contains(
+						`${this.settings.targetHighlightingDirectory}/`
+					)
+				) {
+					const view =
+						this.app.workspace.getActiveViewOfType(MarkdownView);
 
-				// Make sure the user is editing a Markdown file.
-				if (view) {
-					const editor = view.editor;
-					if (editor) {
-						for (let i = 0; i < editor.lineCount(); i++) {
-							const line = editor.getLine(i);
+					// Make sure the user is editing a Markdown file.
+					if (view) {
+						const editor = view.editor;
+						if (editor) {
+							for (let i = 0; i < editor.lineCount(); i++) {
+								const line = editor.getLine(i);
 
-							if (
-								!line.startsWith(
-									this.settings.unfilledStatPrefix
-								) &&
-								line.match(this.settings.statRegex)
-							) {
-								editor.setLine(
-									i,
-									`${this.settings.unfilledStatPrefix}${line}`
-								);
-							} else if (
-								line.startsWith(
-									this.settings.unfilledStatPrefix
-								) &&
-								!line.match(this.settings.statRegex)
-							) {
-								editor.setLine(
-									i,
-									line.substring(
-										this.settings.unfilledStatPrefix.length
-									)
-								);
+								if (
+									!line.startsWith(
+										this.settings.unfilledStatPrefix
+									) &&
+									line.match(this.settings.statRegex)
+								) {
+									editor.setLine(
+										i,
+										`${this.settings.unfilledStatPrefix}${line}`
+									);
+								} else if (
+									line.startsWith(
+										this.settings.unfilledStatPrefix
+									) &&
+									!line.match(this.settings.statRegex)
+								) {
+									editor.setLine(
+										i,
+										line.substring(
+											this.settings.unfilledStatPrefix
+												.length
+										)
+									);
+								}
 							}
 						}
 					}
 				}
-			}
-		});
+			})
+		);
 	}
 
 	// Runs when the plugin is disabled.
